@@ -1,0 +1,27 @@
+{
+  "name": "vite-solid",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@flatten-js/core": "^1.4.5",
+    "@solid-primitives/map": "^0.4.8",
+    "@solid-primitives/storage": "^2.1.1",
+    "@solidjs/router": "^0.9.1",
+    "localforage": "^1.10.0",
+    "solid-js": "^1.8.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.9.0",
+    "stylus": "^0.61.0",
+    "typescript": "^5.0.2",
+    "typescript-plugin-css-modules": "^5.0.2",
+    "vite": "^4",
+    "vite-plugin-solid": "^2.7.2"
+  }
+}
