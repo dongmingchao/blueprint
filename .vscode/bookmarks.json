@@ -1,0 +1,24 @@
+{
+	"files": [
+		{
+			"path": "src/utils/sockets.ts",
+			"bookmarks": [
+				{
+					"line": 75,
+					"column": 33,
+					"label": "socket数据获取"
+				}
+			]
+		},
+		{
+			"path": "src/components/NodeSocket/NodeSocket.tsx",
+			"bookmarks": [
+				{
+					"line": 48,
+					"column": 25,
+					"label": "自动在使用组件时注册socket数据"
+				}
+			]
+		}
+	]
+}

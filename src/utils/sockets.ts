@@ -1,12 +1,9 @@
-import {
-  Props as NodeSocketProps,
-  useValuesData,
-} from '@/components/NodeSocket/NodeSocket';
+import { SocketsChannel } from '@/components/NodeSocket/ChannelNodeSocket';
+import { Props as NodeSocketProps } from '@/components/NodeSocket/NodeSocket';
 import {
   NodeSocketData,
   OutputSocketType,
-  SocketRef,
-  ValuesData,
+  SocketRef, useValuesData
 } from '@/components/NodeSocket/SocketsData';
 import { NodeIndex } from '@/components/Workloard/IndexData';
 import {
@@ -16,12 +13,12 @@ import {
   createEffect,
   createMemo,
   createSignal,
-  useContext
+  useContext,
 } from 'solid-js';
 
 export function isSocketLinked(
   name: keyof any,
-  input: 'input' | 'output' = 'input',
+  input: SocketsChannel = 'inputs',
 ) {
   const inputStore = useValuesData()?.[input];
   return createMemo(() => {
@@ -45,7 +42,7 @@ export function injectIsLinked<
   }
 >(
   Injected: Component<T>,
-  kind: 'input' | 'output',
+  kind: SocketsChannel,
 ): Component<Omit<T, 'isLinked'>> {
   return function (props) {
     return Injected({
@@ -64,7 +61,6 @@ export function createInputSocket<
   P extends OutputSocketType,
   T = ReturnType<P['process']>
 >(name: string, onLinked?: OnLink<P, T>, defaultValue?: T) {
-  const values = useContext(ValuesData);
   const node_id = useContext(NodeIndex);
   const [func, setFunc] = createSignal<(prev?: T) => T>();
   const [value, pValue] = createSignal<T | undefined>(defaultValue);
@@ -76,10 +72,9 @@ export function createInputSocket<
   });
 
   const data = createMemo(() => {
-    if (node_id === undefined) return;
-    const node = values[node_id];
+    const node = useValuesData();
     if (node === undefined) return;
-    const [inputs] = node.input;
+    const [inputs] = node.inputs;
     return inputs[name];
   });
 
@@ -88,7 +83,7 @@ export function createInputSocket<
     let currentSocket: NodeSocketData | undefined = data();
     if (currentSocket) {
       const [link] = currentSocket.linkSocket;
-      console.log('link update')
+      console.log('link update');
       const lastSocket = link();
       if (lastSocket === undefined) {
         setFunc();
@@ -96,24 +91,7 @@ export function createInputSocket<
         onLinked(setFunc, lastSocket);
       }
     }
-  })
-
-  // createEffect(
-  //   on(
-  //     data,
-  //     () => {
-  //       let currentSocket: NodeSocketData | undefined = data();
-  //       if (currentSocket) {
-  //         const [link] = currentSocket.linkSocket;
-  //         console.log('link update')
-  //         const lastSocket = link();
-  //         const pp = process(lastSocket);
-  //         onLinked?.(setFunc, pp);
-  //       }
-  //     },
-  //     { defer: true },
-  //   ),
-  // );
+  });
 
   return {
     value: [value, pValue] as [Accessor<T>, Setter<T>],

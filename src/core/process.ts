@@ -1,12 +1,6 @@
-import { NodeSocketData, OutputSocketType, SocketRef } from '@/components/NodeSocket/SocketsData';
-import { NodeType } from '@/components/Workloard/NodesData';
-import { OutputsPost } from './OutputProvider';
+import { OutputSocketType, SocketRef } from '@/components/NodeSocket/SocketsData';
 import { useContext } from 'solid-js';
-
-export interface NamedNodeSocket<NodeKind extends NodeType = NodeType>
-  extends NodeSocketData<NodeKind> {
-  name: keyof NodeKind;
-}
+import { OutputsPost } from './OutputProvider';
 
 export function findSocketType(socket: SocketRef): OutputSocketType | undefined {
   const outputs = useContext(OutputsPost);

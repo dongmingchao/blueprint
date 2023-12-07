@@ -1,35 +1,30 @@
-import { OperatorSocket } from '@/core/operators';
 import { Location2D } from '@/interfaces/node';
 import { whenNotUndefined } from '@/utils/props';
 import {
   ParentProps,
-  Ref,
   createEffect,
+  createRenderEffect,
   createSignal,
-  on,
-  onCleanup,
-  splitProps,
+  onMount,
   useContext
 } from 'solid-js';
 import { NodeIndex } from '../Workloard/IndexData';
-import { NodesData, whenNode } from '../Workloard/NodesData';
-import { OperatorProps, OperatorsData } from '../Workloard/OperatorsProvider';
+import { NodesData } from '../Workloard/NodesData';
+import { OperatorsData } from '../Workloard/OperatorsProvider';
 import css from './NodeSocket.module.styl';
-import { NodeSocketData, SocketRef, SocketsData, ValuesData } from './SocketsData';
+import { NodeSocketData, SocketRef, SocketsData } from './SocketsData';
 
 export interface Props extends ParentProps {
   class?: string;
-  ref?: Ref<SVGSVGElement>;
   name: keyof any;
+  refs?: {
+    body?(el: HTMLDivElement): void
+    pin?(el: SVGSVGElement): void
+  }
+  updatePinPosition?(f: () => undefined): void;
 }
 
-export function useValuesData() {
-  const values = useContext(ValuesData);
-  const node_id = useContext(NodeIndex);
-  if (values && node_id !== undefined) {
-    return values[node_id];
-  }
-}
+const NodeSocketKind = 'node socket';
 
 function NodeSocket(props: Props) {
   const node_id = useContext(NodeIndex);
@@ -47,6 +42,8 @@ function NodeSocket(props: Props) {
     return c.join(' ');
   }
 
+  let body: undefined | HTMLDivElement;
+
   createEffect(() => {
     /**
      * 自动在使用组件时注册socket数据
@@ -55,100 +52,107 @@ function NodeSocket(props: Props) {
     const node = nodesData[node_id];
     if (node === undefined) return;
     if (socketsData === undefined) return;
+    if (body === undefined) return;
     const newSocket: NodeSocketData = {
       pinPosition,
       node,
       linkSocket,
+      el: body,
+      updatePinPosition,
     }
     const [, upd] = socketsData;
     upd({ [props.name]: newSocket })
   })
 
-  const node_t = whenNode(node => {
-    return node.transform[0]()
-  })
+  // const node_t = useNode(node => {
+  //   return node.transform[0]()
+  // })
 
-  createEffect(() => {
-    const [{ ref }] = splitProps(props, ['ref']);
-    if (ref === undefined) return;
-    const obs = new ResizeObserver(entries => {
-      for (const entry of entries) {
-        const cr = entry.target.getBoundingClientRect();
-        setPinPosition({
-          left: cr.left,
-          top: cr.top,
-        })
-      }
-    });
-    obs.observe(ref as SVGSVGElement);
-    onCleanup(() => {
-      obs.disconnect()
-    })
-  })
+  // createEffect(() => {
+  //   const [{ ref }] = splitProps(props, ['ref']);
+  //   if (ref === undefined) return;
+  //   const obs = new ResizeObserver(entries => {
+  //     for (const entry of entries) {
+  //       const cr = entry.target.getBoundingClientRect();
+  //       setPinPosition({
+  //         left: cr.left,
+  //         top: cr.top,
+  //       })
+  //     }
+  //   });
+  //   obs.observe(ref as SVGSVGElement);
+  //   onCleanup(() => {
+  //     obs.disconnect()
+  //   })
+  // })
 
-  createEffect(on(node_t, () => {
-    const ref = props.ref as SVGSVGElement;
-    if (props.ref) {
-      const box = ref.getBoundingClientRect();
+  let pin: SVGSVGElement
+
+  function updatePinPosition(): undefined {
+    if (pin) {
+      const box = pin.getBoundingClientRect();
       setPinPosition({
         left: box.left,
         top: box.top,
       });
     }
-  }, { defer: true }));
-
-  function useSocket(apply: (arg0: OperatorSocket) => void) {
-    if (node_id === undefined) return;
-    useSocketsData(sd => {
-      const [sockets] = sd;
-      const self = sockets[props.name];
-      if (self === undefined) return;
-      apply({
-        data: self,
-        ref: {
-          node_id, name: props.name,
-        }
-      });
-    })
   }
+
+  onMount(() => {
+    updatePinPosition()
+  })
+
+  createRenderEffect(() => {
+    if (props.updatePinPosition) {
+      props.updatePinPosition(updatePinPosition);
+    }
+  })
+
+  // function useSocket(apply: (arg0: OperatorSocket) => void) {
+  //   if (node_id === undefined) return;
+  //   useSocketsData(sd => {
+  //     const [sockets] = sd;
+  //     const self = sockets[props.name];
+  //     if (self === undefined) return;
+  //     apply({
+  //       data: self,
+  //       ref: {
+  //         node_id, name: props.name,
+  //       }
+  //     });
+  //   })
+  // }
 
   const onTouchPress = (e: PointerEvent) => {
-    useSocket(self => {
-      useOperatorsData(operators => {
-        const [, upd] = operators.op;
-        const d: OperatorProps = { dragSocket: self };
-        upd(d);
+    if (node_id === undefined) return;
+    const socketRef: SocketRef = { node_id, name: props.name };
+    e.stopPropagation()
+    useOperatorsData(operators => {
+      useSocketsData(([sockets]) => {
+        const data = sockets[props.name];
+        if (data === undefined) return;
+        operators.setDragSocket({
+          ref: socketRef,
+          data,
+        })
       })
-      e.preventDefault()
-      e.stopPropagation()
-    })
-  }
-
-  function onTouchEnter(e: PointerEvent) {
-    useSocket(self => {
-      useOperatorsData(op => {
-        const [, upd] = op.op;
-        const d: OperatorProps = { hoverSocket: self };
-        upd(d);
-      })
-    })
-  }
-
-  function onTouchLeave(e: PointerEvent) {
-    useOperatorsData(op => {
-      const [, upd] = op.op;
-      const d: OperatorProps = { hoverSocket: undefined };
-      upd(d);
     })
   }
 
   return (
     <div
-      onPointerOver={onTouchEnter}
-      onPointerOut={onTouchLeave}
+      data-kind={NodeSocketKind}
+      ref={ref => {
+        props.refs?.body?.(ref)
+        body = ref;
+      }}
+      onPointerDown={onTouchPress}
       class={classNames()}>
-      <svg onPointerDown={onTouchPress}
-        ref={props.ref}
+      <svg
+        ref={ref => {
+          props.refs?.pin?.(ref);
+          pin = ref;
+        }}
         class={css.pin}
         width="15" height="15">
         <circle

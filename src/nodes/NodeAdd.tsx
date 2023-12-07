@@ -2,7 +2,7 @@ import Node from '@/components/Node/Node';
 import { NodeType } from '@/components/Workloard/NodesData';
 import InputNodeSocketNumber from './InputNodeSocketNumber';
 import OutputNamedSocket from '@/sockets/OutputNamedSocket';
-import NumberSocket, { numberSocketOnLink } from '@/sockets/NumberOutput';
+import { NumberOutput, numberSocketOnLink } from '@/sockets/NumberSocket';
 import { createEffect } from 'solid-js';
 import { createInputSocket } from '@/utils/sockets';
 
@@ -18,7 +18,7 @@ class NodeAdd extends NodeType {
 }
 
 export function NodeAddDraw() {
-  const output_result = new NumberSocket();
+  const output_result = new NumberOutput();
   const [, setResult] = output_result.value;
 
   const input_a = createInputSocket('A', numberSocketOnLink, 0);

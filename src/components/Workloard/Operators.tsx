@@ -3,12 +3,13 @@ import { Location2D } from '@/interfaces/node';
 import { FunctionSetter } from '@/utils/children';
 import { whenNotUndefined } from '@/utils/props';
 import { Point, Segment } from '@flatten-js/core';
-import { Accessor, Show, createEffect, createMemo, createSignal, splitProps, useContext } from 'solid-js';
+import { Accessor, Show, createEffect, createMemo, createSignal, splitProps, untrack, useContext } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import BaseLink from '../NodeLink/BaseLink';
 import BasePath from '../Shapes/BasePath';
 import css from './Operators.module.styl';
 import { OperatorsData } from './OperatorsProvider';
+import { useTouchOverElement } from '@/utils/TouchOverProvider';
 
 export interface Props {
   onAddLink?(focus: OperatorSocket, hover: OperatorSocket): void;
@@ -20,64 +21,74 @@ export interface Props {
 
 function Operators(props: Props) {
   const useOperatorsData = whenNotUndefined(useContext(OperatorsData))
-  const [focusSocket, setFocusSocket] = createSignal<OperatorSocket>()
   const [end, setEnd] = createSignal(props.cursor);
+  const usePointer = useTouchOverElement();
+
+  createEffect(() => {
+    usePointer(({ el }) => {
+      const cur = el();
+      if (cur === null) return;
+      useOperatorsData(data => {
+        const { elRef, op } = data;
+        const hover = untrack(op.hoverSocket)
+        if (hover !== undefined && hover.data.el.contains(cur)) return;
+        for (const [id, item] of elRef.inputs) {
+          if (id.contains(cur)) {
+            data.setHoverSocket(item);
+            return;
+          }
+        }
+        data.setHoverSocket();
+      })
+    })
+  })
 
   useOperatorsData(data => {
 
     createEffect(() => {
-      const [, upd] = data.op;
-      upd('isDrawing', isDraw())
+      data.op.isDrawing = isDraw;
     })
 
     createEffect(() => {
-      const [od] = data.op;
-      setFocusSocket(od.dragSocket);
-      if (od.dragSocket === undefined) {
-        props.onTouchRelease(prev => () => {
-          setIsDraw(false);
-        })
-      }
-    })
-
-    function resetFocus() {
-      const [, upd] = data.op;
-      upd({ dragSocket: undefined });
-    }
-
-    createEffect(() => {
-      const focus = focusSocket();
-      if (focus === undefined) return;
-      const [od, upd] = data.op;
-      const hover = od.hoverSocket;
-      if (hover === undefined) {
+      const od = data.op;
+      const focus = od.dragSocket();
+      const hover = od.hoverSocket();
+      if (hover === undefined || focus === undefined) {
         setEnd(() => props.cursor)
-        props.onTouchRelease(prev => resetFocus)
+        // props.onTouchRelease(prev => resetFocus)
       } else if (hover.data !== focus.data) {
         setEnd(() => createMemo(() => {
           const p = hover.data.pinPosition();
           if (p === undefined) return props.cursor();
           return { left: p.left + 7, top: p.top + 7 };
         }));
-        const [{ onAddLink }] = splitProps(props, ['onAddLink'])
-        if (onAddLink) {
-          props.onTouchRelease(prev => e => {
-            onAddLink(focus, hover);
-            upd({ dragSocket: undefined });
-          })
-        }
+        // const [{ onAddLink }] = splitProps(props, ['onAddLink'])
+        // if (onAddLink) {
+        //   props.onTouchRelease(prev => e => {
+        //     onAddLink(focus, hover);
+        //     resetFocus()
+        //   })
+        // }
       }
     })
 
   })
+  const isDraggingSocket = createMemo<boolean>(() => {
+    return useOperatorsData(data => {
+      const od = data.op;
+      return od.dragSocket();
+    }) !== undefined;
+  })
 
   const socketLocation = createMemo<Location2D>(() => {
-    let socket = focusSocket()?.data.pinPosition();
-    socket = socket ?? { left: 0, top: 0 };
-    return {
-      left: socket.left + 7,
-      top: socket.top + 7,
-    }
+    return useOperatorsData<Location2D | undefined>(data => {
+      const od = data.op;
+      const socket = od.dragSocket()?.data.pinPosition()
+      if (socket) return {
+        left: socket.left + 7,
+        top: socket.top + 7,
+      }
+    }) ?? { left: 0, top: 0 }
   });
 
   const operatorTargetLocation = () => end()()
@@ -85,16 +96,41 @@ function Operators(props: Props) {
   const [isDraw, setIsDraw] = createSignal(false);
   const [points, setPoints] = createStore<Location2D[]>([]);
 
-  createEffect(() => {
-    props.onTouchPress(prev => e => {
-      e.preventDefault();
-      setIsDraw(true);
+  function startDraw() {
+    setIsDraw(true)
+  }
+
+  function stopDraw() {
+    setIsDraw(false)
+  }
+
+  function onTouchRelease() {
+    stopDraw()
+    useOperatorsData(data => {
+      const od = data.op;
+      const focus = od.dragSocket();
+      const hover = od.hoverSocket();
+      data.setDragSocket();
+      data.setHoverSocket();
+      if (focus === undefined || hover === undefined) {
+        return;
+      }
+      if (focus.data === hover.data) return;
+      if (props.onAddLink === undefined) return;
+      props.onAddLink(focus, hover);
     })
+  }
+
+  createEffect(() => {
+    props.onTouchPress(_prev => startDraw)
+  })
+
+  createEffect(() => {
+    props.onTouchRelease(_prev => onTouchRelease)
   })
 
   createEffect(() => {
     if (isDraw()) {
-      // console.log('point add', points.length, props.cursor())
       setPoints(produce(p => p.push(props.cursor())))
     } else {
       setPoints(p => {
@@ -108,7 +144,7 @@ function Operators(props: Props) {
             })
             const { geometry: { links } } = data;
             for (const id of Object.getOwnPropertySymbols(links)) {
-              const item = links[id];
+              const item = links[id] as Accessor<Segment>;
               const seg = item();
               const select = path.filter(d => d.intersect(seg).length).length;
               if (select) {
@@ -122,17 +158,10 @@ function Operators(props: Props) {
     }
   })
 
-  let drawline: SVGPathElement | undefined;
-
-  createEffect(() => {
-    if (drawline === undefined) return;
-
-  })
-
   return (
     <div class={css.operators}>
       <svg class={css.painter}>
-        <Show when={focusSocket() !== undefined}>
+        <Show when={isDraggingSocket()}>
           <circle
             cx={operatorTargetLocation().left}
             cy={operatorTargetLocation().top}
@@ -144,7 +173,7 @@ function Operators(props: Props) {
             end={operatorTargetLocation}
             start={socketLocation} />
         </Show>
-        <BasePath ref={drawline} LineTo={points} />
+        <BasePath LineTo={points} />
       </svg>
     </div>
   )

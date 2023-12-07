@@ -5,16 +5,19 @@ import { ValuesData } from '../NodeSocket/SocketsData';
 
 function ValuesProvider(props: ParentProps) {
   const values = [{
-    input: createStore({}),
-    output: createStore({}),
+    inputs: createStore({}),
+    outputs: createStore({}),
   }, {
-    input: createStore({}),
-    output: createStore({}),
+    inputs: createStore({}),
+    outputs: createStore({}),
   }, {
-    input: createStore({}),
-    output: createStore({}),
+    inputs: createStore({}),
+    outputs: createStore({}),
+  }, {
+    inputs: createStore({}),
+    outputs: createStore({}),
   }];
-  console.log('ValuesProvider Render');
+  console.info('[Render]::ValuesProvider Render');
 
   return (
     <div>ValuesProvider

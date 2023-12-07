@@ -1,5 +1,5 @@
 import { Location2D } from '@/interfaces/node';
-import { createMemo, createEffect, Ref } from 'solid-js';
+import { Ref, createMemo } from 'solid-js';
 
 export interface Props {
   LineTo: Location2D[]

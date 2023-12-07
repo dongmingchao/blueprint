@@ -3,6 +3,7 @@ import { NodeType } from '@/components/Workloard/NodesData';
 import { stringSocketOnLink } from '@/sockets/StringSocket';
 import { createInputSocket } from '@/utils/sockets';
 import InputNodeSocketString from './InputNodeSocketString';
+import { observeSize } from '@/utils/observeSize';
 
 class NodeLabel extends NodeType {
 
@@ -17,13 +18,21 @@ export function NodeLabelDraw() {
 
   console.info('[Render]::NodeLabelDraw Render')
   let body: HTMLDivElement | undefined;
+  let updatePin = () => undefined;
+
+  function onContentResize(rect: DOMRectReadOnly) {
+    updatePin()
+  }
 
   return (
     <Node ref={body}>
       Label
       <hr />
-      <label>{value()}</label>
-      <InputNodeSocketString name="value" value={input_value.value} />
+      <div ref={observeSize(onContentResize)}>{value()}</div>
+      <InputNodeSocketString
+        name="value"
+        updatePinPosition={f => updatePin = f}
+        value={input_value.value} />
     </Node>
   );
 }

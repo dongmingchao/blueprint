@@ -1,28 +1,30 @@
+import { NodeAddDraw } from '@/nodes/NodeAdd';
+import { NodeLabelDraw } from '@/nodes/NodeLabel';
 import {
   ParentProps,
   createSignal,
 } from 'solid-js';
 import { NodeDataStore, NodesData } from './NodesData';
-import NodeAdd, { NodeAddDraw } from '@/nodes/NodeAdd';
-import NodeLabel, { NodeLabelDraw } from '@/nodes/NodeLabel';
+import NodeString from '@/nodes/NodeString';
 
 function NodesProvider(props: ParentProps) {
   const store: NodeDataStore[] = [
     {
       // TODO: 这里要用signal更新组件，触发细粒度更新
       Com: NodeAddDraw,
-      kind: new NodeAdd(),
       transform: createSignal({ left: 100, top: 10 }),
     },
     {
       Com: NodeAddDraw,
-      kind: new NodeAdd(),
       transform: createSignal({ left: 140, top: 160 }),
     },
     {
       Com: NodeLabelDraw,
-      kind: new NodeLabel(),
       transform: createSignal({ left: 200, top: 300 }),
+    },
+    {
+      Com: NodeString,
+      transform: createSignal({ left: 200, top: 400 }),
     },
   ];
 

@@ -19,7 +19,7 @@ function Links(props: {
     for (const [id, { fromSocket, toSocket }] of props.collection) {
       const toNode = values[toSocket.node_id];
       if (toNode === undefined) continue;
-      const [input] = toNode.input;
+      const [input] = toNode.inputs;
       const ts = input[toSocket.name];
       if (ts === undefined) continue;
       console.log('update links', fromSocket, toSocket);

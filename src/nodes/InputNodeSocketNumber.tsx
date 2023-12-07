@@ -1,3 +1,4 @@
+import BaseInput from '@/components/Base/BaseInput';
 import InputNodeSocket from '@/components/NodeSocket/InputNodeSocket';
 import { Props as NodeSocketProps } from '@/components/NodeSocket/NodeSocket';
 import { injectIsLinked } from '@/utils/sockets';
@@ -15,29 +16,18 @@ interface NodeSocketNumberProps extends NodeSocketProps {
 }
 
 function InputNodeSocketNumber(props: NodeSocketNumberProps) {
-  const [value, pValue] = props.value ?? createSignal(props.defaultValue ?? 0);
-  const updateValue: JSX.EventHandler<HTMLInputElement, InputEvent> = function (
-    e
-  ) {
-    const p = parseFloat(e.currentTarget.value);
-    if (isNaN(p)) return;
-    pValue(p);
-  };
+  const value = props.value ?? createSignal(props.defaultValue ?? 0);
 
   return (
     <InputNodeSocket name={props.name}>
       <label style="width: 1em">
         {props.label ?? props.name.toString()}
       </label>
-      <Show when={!props.isLinked()} fallback={value()}>
-        <input
-          style="max-width: 8em"
-          type="number"
-          onInput={updateValue}
-          value={value()} />
+      <Show when={!props.isLinked()} fallback={value[0]()}>
+        <BaseInput type='number' value={value} />
       </Show>
     </InputNodeSocket>
   );
 }
 
-export default injectIsLinked(InputNodeSocketNumber, 'input');
+export default injectIsLinked(InputNodeSocketNumber, 'inputs');

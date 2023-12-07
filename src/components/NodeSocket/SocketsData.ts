@@ -3,30 +3,41 @@ import { StoreReturn } from '@/utils/props';
 import { Location2D } from '@/interfaces/node';
 import { Accessor, Signal } from 'solid-js';
 import { NodeDataStore, NodeType } from '../Workloard/NodesData';
-
-export const SocketIndex = createContext<number>();
+import { NodeIndex } from '../Workloard/IndexData';
 
 export const SocketsData = createContext<SocketCollection>();
 
-export interface SocketCollection<T extends NodeType = NodeType>
+export interface SocketCollection
   extends StoreReturn<
     {
-      [K in symbol | string | number | keyof T]?: NodeSocketData<T>;
+      [K in symbol | string | number]: NodeSocketData;
     }
   > {}
 
-export interface NodeSocketData<NodeKind extends NodeType = NodeType> {
+export interface NodeSocketData {
   pinPosition: Accessor<Location2D | undefined>;
-  node: NodeDataStore<NodeKind>;
+  node: NodeDataStore;
   linkSocket: Signal<SocketRef | undefined>;
+  el: HTMLDivElement;
+  updatePinPosition: () => undefined
 }
 
-export const ValuesData = createContext<
-  Array<{
-    output: SocketCollection;
-    input: SocketCollection;
-  }>
->([], { name: 'socket values' });
+export interface SocketValue {
+  outputs: SocketCollection;
+  inputs: SocketCollection;
+}
+
+export const ValuesData = createContext<SocketValue[]>([], {
+  name: 'socket values',
+});
+
+export function useValuesData() {
+  const values = useContext(ValuesData);
+  const node_id = useContext(NodeIndex);
+  if (values && node_id !== undefined) {
+    return values[node_id];
+  }
+}
 
 export interface SocketRef {
   node_id: number;
@@ -38,10 +49,10 @@ export function findOutputSocket(by?: SocketRef) {
   const values = useContext(ValuesData);
   const fromValue = values[by.node_id];
   if (fromValue === undefined) return;
-  const [output] = fromValue.output;
+  const [output] = fromValue.outputs;
   return output[by.name];
 }
 
 export class OutputSocketType extends NodeType {
-  process(): void {};
+  process(): void {}
 }

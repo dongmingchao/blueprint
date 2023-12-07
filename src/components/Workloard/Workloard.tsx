@@ -1,14 +1,13 @@
-import NodesProvider from './ParentProvider';
+import { OperatorSocket } from '@/core/operators';
+import { Location2D } from '@/interfaces/node';
+import { ReactiveMap } from '@solid-primitives/map';
+import { createMemo, createSignal } from 'solid-js';
 import Links, { Link } from './Links';
 import Nodes from './Nodes';
-import { createSignal, createMemo } from 'solid-js';
-import { Location2D } from '@/interfaces/node';
-import css from './Workloard.module.styl';
-import OperatorsProvider from './OperatorsProvider';
 import Operators from './Operators';
-import { OperatorSocket } from '@/core/operators';
-import { produce } from 'solid-js/store';
-import { ReactiveMap } from '@solid-primitives/map';
+import OperatorsProvider from './OperatorsProvider';
+import NodesProvider from './ParentProvider';
+import css from './Workloard.module.styl';
 
 function Workloard() {
   const [cursor, setCursor] = createSignal<Location2D>({ left: 0, top: 0 })
@@ -16,7 +15,12 @@ function Workloard() {
   const [cursorPress, setCursorPress] = createSignal<(e: PointerEvent) => void>(() => { });
   const links = new ReactiveMap<symbol, Link>();
 
+  function onPointerCancel(e: PointerEvent) {
+    console.log('pointer cancel')
+  }
+
   function onTouchPress(e: PointerEvent) {
+    setCursor({ left: e.clientX, top: e.clientY });
     cursorPress()(e)
   }
 
@@ -25,6 +29,7 @@ function Workloard() {
   }
 
   function onTouchRelease(e: PointerEvent) {
+    e.preventDefault()
     cursorRelease()(e);
   }
 
@@ -47,6 +52,7 @@ function Workloard() {
   return (
     <div
       class={css.workloard}
+      onPointerCancel={onPointerCancel}
       onPointerDown={onTouchPress}
       onPointerUp={onTouchRelease}
       onPointerMove={onTouchMove}>

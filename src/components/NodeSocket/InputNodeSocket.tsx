@@ -1,21 +1,18 @@
-import NodeSocket, { useValuesData } from './NodeSocket';
-import { SocketsData } from './SocketsData';
-import css from './NodeSocket.module.styl';
+import ChannelNodeSocket from './ChannelNodeSocket';
 import { Props as NodeSocketProps } from './NodeSocket';
+import css from './NodeSocket.module.styl';
+import { splitProps, mergeProps } from 'solid-js';
 
 export interface Props extends NodeSocketProps { }
 
 function InputNodeSocket(props: Props) {
-  const test = useValuesData()?.input;
+  const socketProps = mergeProps(props, {
+    class: css.input,
+  })
+
   console.info('[Render]::InputNodeSocket Render');
 
-  return (
-    <SocketsData.Provider value={test}>
-      <NodeSocket {...props} class={css.input}>
-        {props.children}
-      </NodeSocket>
-    </SocketsData.Provider>
-  );
+  return <ChannelNodeSocket socketProps={socketProps} channel='inputs' />
 }
 
 export default InputNodeSocket;

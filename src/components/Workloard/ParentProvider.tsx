@@ -8,10 +8,13 @@ import NodesProvider from './NodesProvider';
 import ValuesProvider from './ValuesProvider';
 import OutputsProvider from '@/core/OutputProvider';
 
-function ParentProvider(props: ParentProps) {
-  const contexts: ParentComponent[] = [ValuesProvider, NodesProvider, OutputsProvider];
-  console.log('ParentProvider Render');
+const contexts: ParentComponent[] = [
+  ValuesProvider,
+  NodesProvider,
+  OutputsProvider,
+];
 
+function ParentProvider(props: ParentProps) {
   const c = contexts.reduce(
     (pv: Accessor<JSX.Element>, Cv: ParentComponent) => {
       return () => Cv({

@@ -1,21 +1,17 @@
-import NodeSocket, { useValuesData } from './NodeSocket';
-import { SocketsData } from './SocketsData';
-import css from './NodeSocket.module.styl';
+import { mergeProps } from 'solid-js';
+import ChannelNodeSocket from './ChannelNodeSocket';
 import { Props as NodeSocketProps } from './NodeSocket';
-
+import css from './NodeSocket.module.styl';
 export interface Props extends NodeSocketProps { }
 
 function OutputNodeSocket(props: Props) {
-  const test = useValuesData()?.output;
-  console.log('output node socket render');
+  const socketProps = mergeProps(props, {
+    class: css.output,
+  })
 
-  return (
-    <SocketsData.Provider value={test}>
-      <NodeSocket {...props} class={css.output}>
-        {props.children}
-      </NodeSocket>
-    </SocketsData.Provider>
-  );
+  console.info('[Render]::OutputNodeSocket Render');
+
+  return <ChannelNodeSocket socketProps={socketProps} channel='outputs' />
 }
 
 export default OutputNodeSocket;

@@ -5,38 +5,36 @@ import {
   Ref,
   batch,
   createSignal,
-  useContext,
 } from 'solid-js';
-import { NodeDataStore, NodesData } from '../Workloard/NodesData';
-import { NodeIndex } from '../Workloard/IndexData';
+import { NodeDataStore, useNodeData } from '../Workloard/NodesData';
 import { Location2D } from '@/interfaces/node';
+import { whenNotUndefined } from '@/utils/props';
+import { useValuesData } from '../NodeSocket/SocketsData';
 
 export interface Props extends ParentProps {
   ref?: Ref<HTMLDivElement>
 }
 
-export function useNode<V>(defaultValue: V, apply: (node: NodeDataStore) => V) {
-  const data = useContext(NodeIndex);
-  const nodes = useContext(NodesData);
-
-  if (data === undefined || nodes === undefined || nodes[data] === undefined) {
-    return defaultValue;
-  }
-
-  return apply(nodes[data])
+function useNodeDefault<V>(defaultValue: V, apply: (node: NodeDataStore) => V) {
+  return useNodeData()(apply) ?? defaultValue;
 }
 
 function Node(props: Props) {
   const [isMoving, setIsMoving] = createSignal(false);
-  const [position, setTransform] = useNode(
+  const [position, setTransform] = useNodeDefault(
     createSignal<Location2D>({ left: 0, top: 0 }),
     node => node.transform,
   );
-  const [startPosition, setStartPosition] = createSignal(position());
-  const [clientStartPosition, setClientStartPosition] = createSignal({
+  const [
+    startPosition, setStartPosition
+  ] = createSignal(position());
+  const [
+    clientStartPosition, setClientStartPosition
+  ] = createSignal({
     left: 0,
     top: 0,
   });
+  const useSocketData = whenNotUndefined(useValuesData());
 
   function style(): JSX.CSSProperties {
     const p = position();
@@ -47,7 +45,7 @@ function Node(props: Props) {
   }
 
   const onTouchMove = function (e: PointerEvent) {
-    e.preventDefault();
+    // e.preventDefault();
     let is_moving = isMoving();
     let start = clientStartPosition();
     let s = startPosition();
@@ -58,6 +56,13 @@ function Node(props: Props) {
       };
       setTransform(delta);
     }
+    useSocketData(sockets => {
+      Object.values(sockets.inputs[0])
+        .concat(Object.values(sockets.outputs[0]))
+        .forEach(so => {
+          so.updatePinPosition()
+        })
+    })
   };
 
   function onTouchPress(e: PointerEvent) {

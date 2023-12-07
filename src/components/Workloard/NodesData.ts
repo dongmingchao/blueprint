@@ -13,20 +13,21 @@ export type Accessify<T> = {
   [key in keyof T]: Accessor<T[key]>;
 };
 
-export interface NodeDataStore<K extends NodeType = NodeType> {
+export interface NodeDataStore {
   Com: PureComponent;
   transform: Signal<Location2D>;
-  kind: K;
 }
 
-export function whenNode<R>(apply: (node: NodeDataStore) => R) {
+export function useNodeData() {
   const nodesData = useContext(NodesData);
   const node_id = useContext(NodeIndex);
-  return createMemo(() => {
+  return <R>(apply: (node: NodeDataStore) => R) => {
     if (nodesData === undefined) return;
     if (node_id === undefined) return;
-    return apply(nodesData[node_id]);
-  });
+    const d = nodesData[node_id];
+    if (d === undefined) return;
+    return apply(d);
+  };
 }
 
 export const NodesData = createContext<NodeDataStore[]>([], {
