@@ -1,18 +1,10 @@
 import Node from '@/components/Node/Node';
-import { NodeType } from '@/components/Workloard/NodesData';
 import { stringSocketOnLink } from '@/sockets/StringSocket';
 import { createInputSocket } from '@/utils/sockets';
-import InputNodeSocketString from './InputNodeSocketString';
+import InputNodeSocketString from '../sockets/InputNodeSocketString';
 import { observeSize } from '@/utils/observeSize';
 
-class NodeLabel extends NodeType {
-
-  children() {
-    return NodeLabelDraw;
-  }
-}
-
-export function NodeLabelDraw() {
+function NodeLabelDraw() {
   const input_value = createInputSocket('value', stringSocketOnLink, '');
   const [value] = input_value.value;
 
@@ -37,4 +29,4 @@ export function NodeLabelDraw() {
   );
 }
 
-export default NodeLabel;
+export default NodeLabelDraw;

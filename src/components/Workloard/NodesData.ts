@@ -1,22 +1,16 @@
-import { Location2D, PureComponent } from '@/interfaces/node';
 import {
   createContext,
   Accessor,
-  Signal,
   ParentProps,
   createMemo,
   useContext,
 } from 'solid-js';
 import { NodeIndex } from './IndexData';
+import { NodeDataStore } from '@/interfaces/node';
 
 export type Accessify<T> = {
   [key in keyof T]: Accessor<T[key]>;
 };
-
-export interface NodeDataStore {
-  Com: PureComponent;
-  transform: Signal<Location2D>;
-}
 
 export function useNodeData() {
   const nodesData = useContext(NodesData);
@@ -36,19 +30,21 @@ export const NodesData = createContext<NodeDataStore[]>([], {
 
 export interface NodesProviderProps extends ParentProps {}
 
-export class NodeType {
+class VectorBaseType {
   static mark = Symbol();
   static get marks() {
     return [this.mark];
   }
 
-  isInstanceOf(maybe: typeof NodeType) {
+  isInstanceOf(maybe: typeof VectorType) {
     return (
-      (this.constructor as typeof NodeType).marks.indexOf(maybe.mark) !== -1
+      (this.constructor as typeof VectorType).marks.indexOf(maybe.mark) !== -1
     );
   }
+}
 
-  children(): PureComponent {
-    return () => undefined;
+export class VectorType extends VectorBaseType {
+  static get marks() {
+    return [this.mark, ...super.marks];
   }
 }

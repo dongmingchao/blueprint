@@ -15,10 +15,6 @@ function Workloard() {
   const [cursorPress, setCursorPress] = createSignal<(e: PointerEvent) => void>(() => { });
   const links = new ReactiveMap<symbol, Link>();
 
-  function onPointerCancel(e: PointerEvent) {
-    console.log('pointer cancel')
-  }
-
   function onTouchPress(e: PointerEvent) {
     setCursor({ left: e.clientX, top: e.clientY });
     cursorPress()(e)
@@ -52,7 +48,6 @@ function Workloard() {
   return (
     <div
       class={css.workloard}
-      onPointerCancel={onPointerCancel}
       onPointerDown={onTouchPress}
       onPointerUp={onTouchRelease}
       onPointerMove={onTouchMove}>

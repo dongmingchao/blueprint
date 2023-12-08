@@ -13,6 +13,7 @@ import {
   createEffect,
   createMemo,
   createSignal,
+  on,
   useContext,
 } from 'solid-js';
 
@@ -64,6 +65,7 @@ export function createInputSocket<
   const node_id = useContext(NodeIndex);
   const [func, setFunc] = createSignal<(prev?: T) => T>();
   const [value, pValue] = createSignal<T | undefined>(defaultValue);
+  const node = useValuesData();
 
   createEffect(() => {
     const updater = func();
@@ -72,24 +74,26 @@ export function createInputSocket<
   });
 
   const data = createMemo(() => {
-    const node = useValuesData();
     if (node === undefined) return;
     const [inputs] = node.inputs;
     return inputs[name];
   });
 
+  const link = createMemo(on(data, () => {
+    const currentSocket = data();
+    if (currentSocket === undefined) return;
+    return currentSocket.linkSocket[0];
+  }, { defer: true }))
+
   createEffect(() => {
     if (onLinked === undefined) return;
-    let currentSocket: NodeSocketData | undefined = data();
-    if (currentSocket) {
-      const [link] = currentSocket.linkSocket;
-      console.log('link update');
-      const lastSocket = link();
-      if (lastSocket === undefined) {
-        setFunc();
-      } else {
-        onLinked(setFunc, lastSocket);
-      }
+    const lsdc = link();
+    if (lsdc === undefined) return;
+    const lastSocket = lsdc();
+    if (lastSocket === undefined) {
+      setFunc();
+    } else {
+      onLinked(setFunc, lastSocket);
     }
   });
 

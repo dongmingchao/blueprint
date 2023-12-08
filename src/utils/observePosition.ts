@@ -1,5 +1,3 @@
-import { onCleanup } from 'solid-js';
-
 export function observePosition(
   element: HTMLElement,
   callback: (target: IntersectionObserverEntry) => void,
@@ -46,21 +44,4 @@ export function observePosition(
     intersectionObserver.disconnect();
     positionObserver.remove();
   };
-}
-function PositionObserver(el: HTMLElement) {
-  const observer = document.createElement('div');
-  el.appendChild(observer);
-  const obs = new IntersectionObserver(
-    entires => {
-      console.log(entires);
-    },
-    {
-      root: el,
-    },
-  );
-  obs.observe(observer);
-
-  onCleanup(() => {
-    obs.disconnect();
-  });
 }

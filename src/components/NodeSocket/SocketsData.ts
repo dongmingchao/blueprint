@@ -2,7 +2,8 @@ import { createContext, useContext } from 'solid-js';
 import { StoreReturn } from '@/utils/props';
 import { Location2D } from '@/interfaces/node';
 import { Accessor, Signal } from 'solid-js';
-import { NodeDataStore, NodeType } from '../Workloard/NodesData';
+import { VectorType } from '../Workloard/NodesData';
+import { NodeDataStore } from '@/interfaces/node';
 import { NodeIndex } from '../Workloard/IndexData';
 
 export const SocketsData = createContext<SocketCollection>();
@@ -19,7 +20,7 @@ export interface NodeSocketData {
   node: NodeDataStore;
   linkSocket: Signal<SocketRef | undefined>;
   el: HTMLDivElement;
-  updatePinPosition: () => undefined
+  updatePinPosition: () => undefined;
 }
 
 export interface SocketValue {
@@ -53,6 +54,6 @@ export function findOutputSocket(by?: SocketRef) {
   return output[by.name];
 }
 
-export class OutputSocketType extends NodeType {
+export class OutputSocketType extends VectorType {
   process(): void {}
 }

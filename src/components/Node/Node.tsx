@@ -6,7 +6,8 @@ import {
   batch,
   createSignal,
 } from 'solid-js';
-import { NodeDataStore, useNodeData } from '../Workloard/NodesData';
+import { useNodeData } from '../Workloard/NodesData';
+import { NodeDataStore } from '@/interfaces/node';
 import { Location2D } from '@/interfaces/node';
 import { whenNotUndefined } from '@/utils/props';
 import { useValuesData } from '../NodeSocket/SocketsData';

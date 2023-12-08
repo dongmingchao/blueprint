@@ -22,7 +22,7 @@ function Links(props: {
       const [input] = toNode.inputs;
       const ts = input[toSocket.name];
       if (ts === undefined) continue;
-      console.log('update links', fromSocket, toSocket);
+      console.warn('update links', fromSocket, toSocket);
       const fs = findOutputSocket(fromSocket);
       if (fs === undefined) return;
       ts.linkSocket[1](fromSocket);
