@@ -1,4 +1,4 @@
-import { Component, ComponentProps, ValidComponent, mergeProps } from 'solid-js';
+import { ComponentProps, ValidComponent, mergeProps } from 'solid-js';
 import { SetStoreFunction } from 'solid-js/store';
 import { Dynamic } from 'solid-js/web';
 

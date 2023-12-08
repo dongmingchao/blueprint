@@ -12,7 +12,7 @@ function NodeLabelDraw() {
   let body: HTMLDivElement | undefined;
   let updatePin = () => undefined;
 
-  function onContentResize(rect: DOMRectReadOnly) {
+  function onContentResize(_rect: DOMRectReadOnly) {
     updatePin()
   }
 

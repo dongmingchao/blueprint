@@ -1,11 +1,9 @@
 import { SocketsChannel } from '@/components/NodeSocket/ChannelNodeSocket';
 import { Props as NodeSocketProps } from '@/components/NodeSocket/NodeSocket';
 import {
-  NodeSocketData,
   OutputSocketType,
   SocketRef, useValuesData
 } from '@/components/NodeSocket/SocketsData';
-import { NodeIndex } from '@/components/Workloard/IndexData';
 import {
   Accessor,
   Component,
@@ -13,8 +11,7 @@ import {
   createEffect,
   createMemo,
   createSignal,
-  on,
-  useContext,
+  on
 } from 'solid-js';
 
 export function isSocketLinked(
@@ -62,7 +59,6 @@ export function createInputSocket<
   P extends OutputSocketType,
   T = ReturnType<P['process']>
 >(name: string, onLinked?: OnLink<P, T>, defaultValue?: T) {
-  const node_id = useContext(NodeIndex);
   const [func, setFunc] = createSignal<(prev?: T) => T>();
   const [value, pValue] = createSignal<T | undefined>(defaultValue);
   const node = useValuesData();

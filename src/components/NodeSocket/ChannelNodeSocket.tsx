@@ -6,7 +6,6 @@ import { useContext, createEffect, splitProps } from 'solid-js';
 import { NodeIndex } from '../Workloard/IndexData';
 import { OperatorsData } from '../Workloard/OperatorsProvider';
 import { Props as NodeSocketProps } from '@/components/NodeSocket/NodeSocket';
-import { children } from '../../utils/children';
 
 export type SocketsChannel = 'inputs' | 'outputs';
 

@@ -2,7 +2,7 @@ import { createContext, useContext } from 'solid-js';
 import { StoreReturn } from '@/utils/props';
 import { Location2D } from '@/interfaces/node';
 import { Accessor, Signal } from 'solid-js';
-import { VectorType } from '../Workloard/NodesData';
+import { VectorType } from '../../core/VectorBaseType';
 import { NodeDataStore } from '@/interfaces/node';
 import { NodeIndex } from '../Workloard/IndexData';
 

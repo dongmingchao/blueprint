@@ -1,7 +1,7 @@
+import { mergeProps } from 'solid-js';
 import ChannelNodeSocket from './ChannelNodeSocket';
 import { Props as NodeSocketProps } from './NodeSocket';
 import css from './NodeSocket.module.styl';
-import { splitProps, mergeProps } from 'solid-js';
 
 export interface Props extends NodeSocketProps { }
 

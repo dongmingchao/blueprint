@@ -9,6 +9,7 @@ function loadProxy(url: URL) {
 }
 
 export default defineConfig({
+  base: './',
   plugins: [solid()],
   resolve: {
     alias: [
