@@ -1,23 +1,24 @@
-import { NodeDataStore } from '@/interfaces/node';
-import { Location2D } from '@/interfaces/node';
-import { createSignal, lazy } from 'solid-js';
-import { Fragment } from 'solid-js/h/jsx-runtime';
+import { Location2D, NodeDataStore } from '@/interfaces/node';
+import { JSX, lazy } from 'solid-js';
+import * as nodes from '../nodes';
 
 export interface SerializableNode {
   transform: Location2D;
-  importedKind: string;
+  importedKind: keyof typeof nodes;
 }
 
 export function createNodesData(data: SerializableNode): NodeDataStore {
   return {
-    Com: lazy(() => import(data.importedKind).catch(error => {
+    Com: lazy(() => nodes[data.importedKind].catch(error => {
       return {
-        default() {
-          return Fragment({ children: error })
+        default(): JSX.Element {
+          return error
         }
       }
     })),
-    transform: createSignal(data.transform),
+    transform: () => data.transform,
+    inputs: {},
+    outputs: {},
   };
 }
 

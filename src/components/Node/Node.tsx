@@ -1,41 +1,36 @@
-import css from './Node.module.styl';
+import { Location2D } from '@/interfaces/node';
 import {
   JSX,
   ParentProps,
   Ref,
   batch,
-  createSignal,
+  createMemo,
+  createSignal
 } from 'solid-js';
-import { useNodeData } from '../Workloard/NodesData';
-import { NodeDataStore } from '@/interfaces/node';
-import { Location2D } from '@/interfaces/node';
-import { whenNotUndefined } from '@/utils/props';
-import { useValuesData } from '../NodeSocket/SocketsData';
+import { dispatchSetNodeTransform, useCurrentNodeData } from '../providers/NodesProvider';
+import css from './Node.module.styl';
 
 export interface Props extends ParentProps {
   ref?: Ref<HTMLDivElement>
 }
 
-function useNodeDefault<V>(defaultValue: V, apply: (node: NodeDataStore) => V) {
-  return useNodeData()(apply) ?? defaultValue;
-}
-
 function Node(props: Props) {
+  const withNode = useCurrentNodeData();
+  const setNodeTransform = dispatchSetNodeTransform();
   const [isMoving, setIsMoving] = createSignal(false);
-  const [position, setTransform] = useNodeDefault(
-    createSignal<Location2D>({ left: 0, top: 0 }),
-    node => node.transform,
-  );
+  const position = createMemo(() => withNode(node => node.transform()) ?? { left: 0, top: 0 })
+
   const [
     startPosition, setStartPosition
-  ] = createSignal(position());
+  ] = createSignal<Location2D>(position());
   const [
     clientStartPosition, setClientStartPosition
   ] = createSignal({
     left: 0,
     top: 0,
   });
-  const useSocketData = whenNotUndefined(useValuesData());
+
+  const useSocketData = useCurrentNodeData();
 
   function style(): JSX.CSSProperties {
     const p = position();
@@ -55,11 +50,12 @@ function Node(props: Props) {
         left: e.clientX - start.left + s.left,
         top: e.clientY - start.top + s.top,
       };
-      setTransform(delta);
+
+      setNodeTransform(delta);
     }
     useSocketData(sockets => {
-      Object.values(sockets.inputs[0])
-        .concat(Object.values(sockets.outputs[0]))
+      Object.values(sockets.inputs)
+        .concat(Object.values(sockets.outputs))
         .forEach(so => {
           so.updatePinPosition()
         })

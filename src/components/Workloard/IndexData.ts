@@ -4,14 +4,12 @@ import {
   For,
   JSXElement,
   ParentProps,
-  createContext,
 } from 'solid-js';
 
 export interface ArrayEntry<T = unknown> {
   item: T;
   index: Accessor<number>;
 }
-export const NodeIndex = createContext<number>()
 
 export interface ForIndexProps<T> extends ParentProps {
   each: T[];

@@ -7,3 +7,7 @@ export function once<T extends Function>(ship: T) {
   main.invocked = false;
   return main;
 }
+
+export function isDefined<T>(val: T | undefined): val is T {
+  return val !== undefined;
+}

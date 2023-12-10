@@ -5,11 +5,10 @@ import {
   ParentProps
 } from 'solid-js';
 import NodesProvider from './NodesProvider';
-import ValuesProvider from './ValuesProvider';
-import OutputsProvider from '@/core/OutputProvider';
+import OutputsProvider from '@/components/providers/OutputProvider';
 
 const contexts: ParentComponent[] = [
-  ValuesProvider,
+  // NOTE: Orders Matter
   NodesProvider,
   OutputsProvider,
 ];

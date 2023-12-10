@@ -1,9 +1,8 @@
-import { SocketsChannel } from '@/components/NodeSocket/ChannelNodeSocket';
+import { SocketsChannel } from '@/interfaces/socket';
 import { Props as NodeSocketProps } from '@/components/NodeSocket/NodeSocket';
-import {
-  OutputSocketType,
-  SocketRef, useValuesData
-} from '@/components/NodeSocket/SocketsData';
+import { OutputSocketType } from '@/components/NodeSocket/SocketsData';
+import { useCurrentNodeData } from '@/components/providers/NodesProvider';
+import { SocketRef } from '@/interfaces/socket';
 import {
   Accessor,
   Component,
@@ -11,21 +10,21 @@ import {
   createEffect,
   createMemo,
   createSignal,
-  on
+  on,
 } from 'solid-js';
 
-export function isSocketLinked(
-  name: keyof any,
-  input: SocketsChannel = 'inputs',
-) {
-  const inputStore = useValuesData()?.[input];
+function useIsSocketLinked(name: keyof any, input: SocketsChannel = 'inputs') {
+  const withNode = useCurrentNodeData();
   return createMemo(() => {
-    const socket = inputStore?.[0][name];
-    if (socket) {
-      const [is_linked] = socket.linkSocket;
-      return is_linked() !== undefined;
-    }
-    return false;
+    return (
+      withNode(node => {
+        const socket = node[input][name];
+        if (socket) {
+          const [is_linked] = socket.linkSocket;
+          return is_linked() !== undefined;
+        }
+      }) ?? false
+    );
   });
 }
 
@@ -44,7 +43,7 @@ export function injectIsLinked<
 ): Component<Omit<T, 'isLinked'>> {
   return function (props) {
     return Injected({
-      isLinked: isSocketLinked(props.name, kind),
+      isLinked: useIsSocketLinked(props.name, kind),
       ...props,
     } as any);
   };
@@ -61,7 +60,7 @@ export function createInputSocket<
 >(name: string, onLinked?: OnLink<P, T>, defaultValue?: T) {
   const [func, setFunc] = createSignal<(prev?: T) => T>();
   const [value, pValue] = createSignal<T | undefined>(defaultValue);
-  const node = useValuesData();
+  const withNode = useCurrentNodeData();
 
   createEffect(() => {
     const updater = func();
@@ -70,16 +69,20 @@ export function createInputSocket<
   });
 
   const data = createMemo(() => {
-    if (node === undefined) return;
-    const [inputs] = node.inputs;
-    return inputs[name];
+    return withNode(node => node.inputs[name]);
   });
 
-  const link = createMemo(on(data, () => {
-    const currentSocket = data();
-    if (currentSocket === undefined) return;
-    return currentSocket.linkSocket[0];
-  }, { defer: true }))
+  const link = createMemo(
+    on(
+      data,
+      () => {
+        const currentSocket = data();
+        if (currentSocket === undefined) return;
+        return currentSocket.linkSocket[0];
+      },
+      { defer: true },
+    ),
+  );
 
   createEffect(() => {
     if (onLinked === undefined) return;

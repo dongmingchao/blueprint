@@ -14,14 +14,14 @@
     "@solid-primitives/storage": "^2.1.1",
     "@solidjs/router": "^0.9.1",
     "localforage": "^1.10.0",
-    "solid-js": "^1.8.5"
+    "solid-js": "^1.8.7"
   },
   "devDependencies": {
     "@types/node": "^20.9.0",
     "stylus": "^0.61.0",
     "typescript": "^5.0.2",
     "typescript-plugin-css-modules": "^5.0.2",
-    "vite": "^4",
+    "vite": "^5.0.7",
     "vite-plugin-solid": "^2.7.2"
   }
 }

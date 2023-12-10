@@ -1,3 +1,3 @@
-export {default as ThingA} from './NodeAdd'
-export {default as ThingB} from './NodeLabel'
-export {default as ThingC} from './NodeString'
+export const NodeAdd = import('./NodeAdd');
+export const NodeLabel = import('./NodeLabel');
+export const NodeString = import('./NodeString');

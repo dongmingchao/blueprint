@@ -1,10 +1,9 @@
 import { Location2D } from '@/interfaces/node';
-import { createEffect, createSignal, useContext, createMemo, onCleanup } from 'solid-js';
-import { NodeSocketData } from '../NodeSocket/SocketsData';
+import { Point, Segment } from '@flatten-js/core';
+import { createEffect, createMemo, createSignal, onCleanup } from 'solid-js';
+import { NodeSocketData } from '../../interfaces/socket';
+import { useOperatorsData } from '../providers/OperatorsProvider';
 import BaseLink from './BaseLink';
-import { whenNotUndefined } from '@/utils/props';
-import { OperatorsData } from '../Workloard/OperatorsProvider';
-import { Segment, Point } from '@flatten-js/core';
 
 export interface Props {
   fromSocket: NodeSocketData;
@@ -28,13 +27,14 @@ function NodeLink(props: Props) {
     left: 0,
     top: 0,
   });
-  const useOperatorsData = whenNotUndefined(useContext(OperatorsData))
+  const withOperatorsData = useOperatorsData();
 
   onCleanup(() => {
-    props.toSocket.linkSocket[1]()
+    const [, setLinked] = props.toSocket.linkSocket
+    setLinked()
   })
 
-  useOperatorsData(data => {
+  withOperatorsData(data => {
     const d = createMemo((): Segment => {
       const pin = props.toSocket.pinPosition() ?? { left: 0, top: 0 };
       const ep = offsetSocket(pin);

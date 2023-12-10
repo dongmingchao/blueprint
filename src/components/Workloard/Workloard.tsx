@@ -5,9 +5,10 @@ import { createMemo, createSignal } from 'solid-js';
 import Links, { Link } from './Links';
 import Nodes from './Nodes';
 import Operators from './Operators';
-import OperatorsProvider from './OperatorsProvider';
-import NodesProvider from './ParentProvider';
+import OperatorsProvider from '../providers/OperatorsProvider';
+import NodesProvider from '../providers/ParentProvider';
 import css from './Workloard.module.styl';
+import AddNewNode from './AddNewNode';
 
 function Workloard() {
   const [cursor, setCursor] = createSignal<Location2D>({ left: 0, top: 0 })
@@ -56,6 +57,7 @@ function Workloard() {
         <NodesProvider>
           <Nodes />
           <Links collection={links} />
+          <AddNewNode />
         </NodesProvider>
         <Operators
           cursor={cursor}
@@ -64,7 +66,6 @@ function Workloard() {
           onTouchPress={setCursorPress}
           onTouchRelease={setCursorRelease} />
       </OperatorsProvider>
-      <button type="button">Add</button>
     </div>
   );
 }

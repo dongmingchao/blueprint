@@ -10,10 +10,8 @@ function NodeLabelDraw() {
 
   console.info('[Render]::NodeLabelDraw Render')
   let body: HTMLDivElement | undefined;
-  let updatePin = () => undefined;
 
   function onContentResize(_rect: DOMRectReadOnly) {
-    updatePin()
   }
 
   return (
@@ -23,7 +21,6 @@ function NodeLabelDraw() {
       <div ref={observeSize(onContentResize)}>{value()}</div>
       <InputNodeSocketString
         name="value"
-        updatePinPosition={f => updatePin = f}
         value={input_value.value} />
     </Node>
   );

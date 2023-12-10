@@ -1,13 +1,9 @@
-import NodeSocket from './NodeSocket';
-import { useValuesData } from './SocketsData';
-import { SocketsData } from './SocketsData';
-import { whenNotUndefined } from '@/utils/props';
-import { useContext, createEffect, splitProps } from 'solid-js';
-import { NodeIndex } from '../Workloard/IndexData';
-import { OperatorsData } from '../Workloard/OperatorsProvider';
 import { Props as NodeSocketProps } from '@/components/NodeSocket/NodeSocket';
-
-export type SocketsChannel = 'inputs' | 'outputs';
+import { SocketsChannel } from '@/interfaces/socket';
+import { createSignal, splitProps } from 'solid-js';
+import { dispatchRegisterSocket } from '../providers/NodesProvider';
+import { dispatchSetDragSocket } from '../providers/OperatorsProvider';
+import NodeSocket from './NodeSocket';
 
 interface Props {
   socketProps: NodeSocketProps
@@ -15,46 +11,38 @@ interface Props {
 }
 
 function ChannelNodeSocket(props: Props) {
-  const values = useValuesData()?.[props.channel];
-  const node_id = useContext(NodeIndex);
-  const useOperatorsData = whenNotUndefined(useContext(OperatorsData));
   let socket: undefined | HTMLDivElement;
-  // const socketProps = mergeProps<[NodeSocketProps, Partial<NodeSocketProps>]>(props.socketProps, {
-  // })
-
-  createEffect(() => {
-    const name = props.socketProps.name;
-    useOperatorsData(data => {
-      if (node_id === undefined) return;
-      if (socket === undefined) return;
-      if (values === undefined) return;
-      const value = values[0][name];
-      if (value === undefined) return;
-      const { elRef } = data;
-      const dict = elRef[props.channel];
-      dict.set(socket, {
-        ref: { node_id, name },
-        data: value,
-      })
-    });
-  });
+  // const [socket, setSocket] = createSignal<HTMLDivElement>()
+  const [painter, setPainter] = createSignal<SVGSVGElement>()
+  const setDragSocket = dispatchSetDragSocket();
+  dispatchRegisterSocket(
+    () => socket, painter,
+    props.socketProps.name, props.channel)
 
   const [{ children, refs }, socketProps] = splitProps(props.socketProps, ['children', 'refs'])
 
+  function onTouchPress(e: PointerEvent) {
+    e.stopPropagation()
+    setDragSocket(props.socketProps.name, props.channel);
+  }
+
   return (
-    <SocketsData.Provider value={values}>
-      <NodeSocket
-        {...socketProps}
-        refs={{
-          ...refs,
-          body(el) {
-            socket = el;
-            refs?.body?.(el);
-          },
-        }}>
-        {children}
-      </NodeSocket>
-    </SocketsData.Provider>
+    <NodeSocket
+      onTouchPress={onTouchPress}
+      {...socketProps}
+      refs={{
+        ...refs,
+        body(el) {
+          socket = el;
+          refs?.body?.(el);
+        },
+        pin(el) {
+          setPainter(el)
+          refs?.pin?.(el)
+        },
+      }}>
+      {children}
+    </NodeSocket>
   );
 }
 
