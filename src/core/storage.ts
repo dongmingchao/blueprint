@@ -1,7 +1,7 @@
 import { AsyncStorage } from '@solid-primitives/storage';
 import localforage from 'localforage';
 
-export const storage: AsyncStorage = {
+const st: AsyncStorage = {
   getItem: function (key: string): string | Promise<string | null> | null {
     return localforage.getItem(key);
   },
@@ -16,5 +16,10 @@ export const storage: AsyncStorage = {
   },
   get length() {
     return localforage.length();
-  }
-};
+  },
+  clear() {
+    return localforage.clear();
+  },
+}
+
+export const storage = st;

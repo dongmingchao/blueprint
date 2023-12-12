@@ -1,3 +1,4 @@
+import { SerializableNode, createNodesData } from '@/core/register';
 import { Location2D, NodeDataStore } from '@/interfaces/node';
 import { NodeSocketData, SocketRef, SocketsChannel } from '@/interfaces/socket';
 import { StoreReturn } from '@/utils/props';
@@ -8,16 +9,11 @@ import {
 import { createStore, produce } from 'solid-js/store';
 import { useNodeIndex } from '../Workloard/Nodes';
 import { dispatchOperatorAddSocket } from './OperatorsProvider';
+import { useSaveNode } from './StorageProvider';
 
 function NodesProvider(props: ParentProps) {
-  // const [signal, setSignal] = makePersisted(
-  //   createSignal<Location2D[]>([]),
-  //   {
-  //     name: 'nodes',
-  //     storage: mystore,
-  //   },
-  // );
   const store = createStore<NodeDataStore[]>([]);
+  restoreNodes(store)
 
   console.info('[Render]::NodesProvider Render')
 
@@ -40,14 +36,29 @@ export function useNode() {
   };
 }
 
+export function restoreNodes(store: StoreReturn<NodeDataStore[]>) {
+  const { getAll } = useSaveNode()
+
+  createEffect(() => {
+    if (getAll.loading || getAll.error) return;
+    const data = getAll();
+    if (data === undefined) return;
+    const [, setStore] = store;
+    setStore(data.map(createNodesData))
+  })
+}
+
 export function dispatchAddNode() {
   const withNodeStore = useNode();
-  return function (data: NodeDataStore) {
+  const { add } = useSaveNode();
+  return function (ser: SerializableNode) {
     withNodeStore(store => {
+      const data = createNodesData(ser);
       const [, setStore] = store;
       setStore(produce(s => {
         s.push(data);
       }))
+      add(ser)
     })
   }
 }
@@ -117,11 +128,13 @@ export function useNodeData() {
 export function dispatchSetNodeTransform() {
   const withNodeStore = useNode();
   const withNodeIndex = useNodeIndex();
+  const { transform } = useSaveNode();
   return function (location: Location2D) {
     withNodeStore(store => {
       const [, set] = store
       withNodeIndex(id => {
         set(id, 'transform', () => () => location)
+        transform(id, location)
       })
     })
   }

@@ -1,66 +1,70 @@
 import { SerializableNode } from '@/core/register';
-import { createContext, onCleanup, useContext } from 'solid-js';
+import { storage } from '@/core/storage';
+import { Location2D } from '@/interfaces/node';
+import { makePersisted } from '@solid-primitives/storage';
+import { createResource } from 'solid-js';
+import { createStore, produce } from 'solid-js/store';
 
-export const storageNode: SerializableNode[] = [{
-  importedKind: 'NodeAdd',
-  transform: { left: 100, top: 10 }
-}, {
-  importedKind: 'NodeAdd',
-  transform: { left: 200, top: 160 },
-}, {
-  importedKind: 'NodeLabel',
-  transform: { left: 100, top: 300 },
-}, {
-  importedKind: 'NodeString',
-  transform: { left: 200, top: 400 },
-}];
+// type AddFn = (id: symbol, node: SerializableNode) => void;
+// type RemoveFn = (id: symbol) => void;
 
-const SaveNode = createContext<Map<symbol, SerializableNode>>(new Map());
-
-type AddFn = (id: symbol, node: SerializableNode) => void;
-type RemoveFn = (id: symbol) => void;
-
-const addEventMan = createContext<Map<symbol, AddFn>>(new Map());
-const removeEventMan = createContext<Map<symbol, RemoveFn>>(new Map());
+// const addEventMan = createContext<Map<symbol, AddFn>>(new Map());
+// const removeEventMan = createContext<Map<symbol, RemoveFn>>(new Map());
 
 export function useSaveNode() {
-  const data = useContext(SaveNode);
-  const addEvents = useContext(addEventMan);
-  const removeEvents = useContext(removeEventMan);
-  const dispatcherId = Symbol();
+  const [saved2] = createResource(async () => {
+    const ret = await storage.getItem('nodes')
+    if (ret) return JSON.parse(ret) as SerializableNode[]
+  });
+  const [, updateSaved] = makePersisted(
+    createStore<SerializableNode[]>([]),
+    {
+      name: 'nodes',
+      storage,
+    },
+  );
 
-  function produceAdd(id: symbol, node: SerializableNode) {
-    addEvents.forEach(cv => cv(id, node))
-  }
+  // const addEvents = useContext(addEventMan);
+  // const removeEvents = useContext(removeEventMan);
+  // const dispatcherId = Symbol();
 
-  function produceRemove(id: symbol) {
-    removeEvents.forEach(cv => cv(id))
-  }
+  // function produceAdd(id: symbol, node: SerializableNode) {
+  //   addEvents.forEach(cv => cv(id, node))
+  // }
 
-  onCleanup(() => {
-    addEvents.delete(dispatcherId)
-    removeEvents.delete(dispatcherId)
-  })
+  // function produceRemove(id: symbol) {
+  //   removeEvents.forEach(cv => cv(id))
+  // }
+
+  // onCleanup(() => {
+  //   addEvents.delete(dispatcherId)
+  //   removeEvents.delete(dispatcherId)
+  // })
 
   return {
-    id: dispatcherId,
-    onAdd(when: AddFn) {
-      addEvents.set(dispatcherId, when);
-    },
-    onRemove(when: RemoveFn) {
-      removeEvents.set(dispatcherId, when);
-    },
+    // id: dispatcherId,
+    // onAdd(when: AddFn) {
+    //   addEvents.set(dispatcherId, when);
+    // },
+    // onRemove(when: RemoveFn) {
+    //   removeEvents.set(dispatcherId, when);
+    // },
+    getAll: saved2,
     add(node: SerializableNode) {
-      const id = Symbol();
-      produceAdd(id, node);
-      data.set(id, node);
+      // const id = Symbol();
+      // produceAdd(id, node);
+      updateSaved(produce(data => {
+        data.push(node);
+      }))
     },
-    remove(id: symbol) {
-      produceRemove(id);
-      data.delete(id);
+    remove(id: number[]) {
+      // produceRemove(id);
+      updateSaved(data => {
+        return data.filter((_, i) => !id.includes(i))
+      })
     },
-    has(id: symbol) {
-      return data.has(id)
-    },
+    transform(id: number, location: Location2D) {
+      updateSaved(id, 'transform', location)
+    }
   }
 }
