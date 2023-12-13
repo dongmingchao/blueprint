@@ -1,21 +1,18 @@
 import Node from '@/components/Node/Node';
-import InputNodeSocketNumber from '../sockets/InputNodeSocketNumber';
+import { NumberOutput } from '@/sockets/NumberSocket';
 import OutputNamedSocket from '@/sockets/OutputNamedSocket';
-import { NumberOutput, numberSocketOnLink } from '@/sockets/NumberSocket';
-import { createEffect } from 'solid-js';
-import { createInputSocket } from '@/utils/sockets';
+import { createEffect, createSignal } from 'solid-js';
+import InputNodeSocketNumber from '../sockets/InputNodeSocketNumber';
 
 function NodeAddDraw() {
   const output_result = new NumberOutput();
-  const [, setResult] = output_result.value;
-
-  const input_a = createInputSocket('A', numberSocketOnLink, 0);
-
-  const input_b = createInputSocket('B', numberSocketOnLink, 0);
+  const input_a = createSignal(0)
+  const input_b = createSignal(0)
 
   createEffect(() => {
-    const [a] = input_a.value;
-    const [b] = input_b.value;
+    const [, setResult] = output_result.value;
+    const [a] = input_a;
+    const [b] = input_b;
     setResult(a() + b())
   })
 
@@ -29,11 +26,13 @@ function NodeAddDraw() {
         Result
       </OutputNamedSocket>
       <InputNodeSocketNumber
+        styles={{ label: 'width: 1em;' }}
         name="A"
-        value={input_a.value} />
+        value={input_a} />
       <InputNodeSocketNumber
+        styles={{ label: 'width: 1em;' }}
         name="B"
-        value={input_b.value} />
+        value={input_b} />
     </Node>
   );
 }

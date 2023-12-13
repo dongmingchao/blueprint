@@ -1,27 +1,24 @@
 import Node from '@/components/Node/Node';
-import { stringSocketOnLink } from '@/sockets/StringSocket';
-import { createInputSocket } from '@/utils/sockets';
-import InputNodeSocketString from '../sockets/InputNodeSocketString';
 import { observeSize } from '@/utils/observeSize';
+import { JSX, createSignal } from 'solid-js';
+import InputNodeSocketElement from '@/sockets/InputNodeSocketElement';
 
 function NodeLabelDraw() {
-  const input_value = createInputSocket('value', stringSocketOnLink, '');
-  const [value] = input_value.value;
+  const input_value = createSignal<JSX.Element>();
+  const [value] = input_value;
 
   console.info('[Render]::NodeLabelDraw Render')
-  let body: HTMLDivElement | undefined;
-
   function onContentResize(_rect: DOMRectReadOnly) {
   }
 
   return (
-    <Node ref={body}>
-      Label
+    <Node>
+      Element
       <hr />
       <div ref={observeSize(onContentResize)}>{value()}</div>
-      <InputNodeSocketString
+      <InputNodeSocketElement
         name="value"
-        value={input_value.value} />
+        value={input_value} />
     </Node>
   );
 }

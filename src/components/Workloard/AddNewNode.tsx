@@ -25,13 +25,19 @@ function AddNewNode() {
       class={css['base-button']}
       type="button"
       onPointerDown={onAddPress('NodeLabel')}>
-        Label
+        Element
     </button>
     <button
       class={css['base-button']}
       type="button"
       onPointerDown={onAddPress('NodeString')}>
         String
+    </button>
+    <button
+      class={css['base-button']}
+      type="button"
+      onPointerDown={onAddPress('NodeHeader')}>
+        Header
     </button>
   </div>
 }

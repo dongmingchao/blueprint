@@ -10,7 +10,7 @@ export class NumberOutput extends OutputSocketType {
   }
 }
 
-export const numberSocketOnLink: OnLink<NumberOutput> = function (update, socket) {
+export const numberSocketOnLink: OnLink<number> = function (update, socket) {
   const kind = findSocketType(socket);
   if (kind === undefined) return;
   if (kind instanceof NumberOutput) {

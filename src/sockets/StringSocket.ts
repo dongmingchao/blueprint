@@ -3,7 +3,7 @@ import { findSocketType } from '@/core/process';
 import { OnLink } from '@/utils/sockets';
 import { createSignal } from 'solid-js';
 
-export const stringSocketOnLink: OnLink<any, string> = function (
+export const stringSocketOnLink: OnLink<string> = function (
   update, socket
 ) {
   const kind = findSocketType(socket);

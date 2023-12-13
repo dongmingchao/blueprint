@@ -1,8 +1,7 @@
-import { SocketsChannel } from '@/interfaces/socket';
 import { Props as NodeSocketProps } from '@/components/NodeSocket/NodeSocket';
 import { OutputSocketType } from '@/components/NodeSocket/SocketsData';
 import { useCurrentNodeData } from '@/components/providers/NodesProvider';
-import { SocketRef } from '@/interfaces/socket';
+import { NodeSocketData, SocketRef, SocketsChannel } from '@/interfaces/socket';
 import {
   Accessor,
   Component,
@@ -10,7 +9,7 @@ import {
   createEffect,
   createMemo,
   createSignal,
-  on,
+  on
 } from 'solid-js';
 
 function useIsSocketLinked(name: keyof any, input: SocketsChannel = 'inputs') {
@@ -49,23 +48,30 @@ export function injectIsLinked<
   };
 }
 
-export type OnLink<T extends OutputSocketType, P = ReturnType<T['process']>> = (
+export type OnLink<P> = (
   update: Setter<((prev?: P) => P) | undefined>,
   socketKind: SocketRef,
 ) => void;
 
+export interface InputSocket {
+  data: Accessor<NodeSocketData | undefined>
+}
+
 export function createInputSocket<
   P extends OutputSocketType,
   T = ReturnType<P['process']>
->(name: string, onLinked?: OnLink<P, T>, defaultValue?: T) {
+>(
+  name: keyof any,
+  apply:(updater: (prev?: T) => T) => void,
+  onLinked: OnLink<T>,
+): InputSocket {
   const [func, setFunc] = createSignal<(prev?: T) => T>();
-  const [value, pValue] = createSignal<T | undefined>(defaultValue);
   const withNode = useCurrentNodeData();
 
   createEffect(() => {
     const updater = func();
     if (updater === undefined) return;
-    pValue(updater);
+    apply(updater);
   });
 
   const data = createMemo(() => {
@@ -97,7 +103,6 @@ export function createInputSocket<
   });
 
   return {
-    value: [value, pValue] as [Accessor<T>, Setter<T>],
     data,
   };
 }

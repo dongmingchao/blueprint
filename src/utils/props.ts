@@ -1,13 +1,13 @@
-import { ComponentProps, ValidComponent, mergeProps } from 'solid-js';
+import { Component, ComponentProps, mergeProps } from 'solid-js';
 import { SetStoreFunction } from 'solid-js/store';
-import { Dynamic } from 'solid-js/web';
+import { isDefined } from './CommonTools';
 
-export function withDefaultProps<T extends ValidComponent>(
+export function withDefaultProps<T extends Component>(
   value: ComponentProps<T>, Com: T
 ) {
   return function (props: ComponentProps<T>) {
     const merged = mergeProps(value, props);
-    return <Dynamic component={Com} {...merged} />
+    return Com(merged)
   }
 }
 
@@ -18,4 +18,8 @@ export function whenNotUndefined<T>(target: T | undefined) {
     if (target === undefined) return;
     return apply(target);
   }
+}
+
+export function classNames(...names: Array<string | undefined | Array<string | undefined>>) {
+  return names.flat().filter(isDefined).join(' ')
 }

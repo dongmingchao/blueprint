@@ -11,7 +11,11 @@ export interface NumberProps {
   type: 'number'
 }
 
-function BaseInput(props: TextProps | NumberProps) {
+type Props = (TextProps | NumberProps) & {
+  class?: string
+}
+
+function BaseInput(props: Props) {
   const [value, pValue] = props.value;
   const updateValue: JSX.EventHandler<HTMLInputElement, InputEvent> = e => {
     switch (props.type) {
@@ -30,9 +34,16 @@ function BaseInput(props: TextProps | NumberProps) {
     e.stopPropagation()
   }
 
+  function classNames() {
+    const ret: string[] = []
+    if (css['base-input']) ret.push(css['base-input'])
+    if (props.class) ret.push(props.class)
+    return ret.join(' ')
+  }
+
   return <input
     placeholder='None'
-    class={css['base-input']}
+    class={classNames()}
     type={props.type}
     value={value()}
     onPointerDown={whenFocus}
