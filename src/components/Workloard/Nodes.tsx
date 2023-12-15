@@ -1,5 +1,6 @@
 import { Accessor, For, createContext, useContext } from 'solid-js';
 import { useNodeData } from '../providers/NodesProvider';
+import NodeRichText from '@/nodes/NodeRichText';
 
 const NodeIndex = createContext<Accessor<number>>()
 
@@ -17,6 +18,7 @@ function Nodes() {
           </NodeIndex.Provider>
         )}
       </For>
+      <NodeRichText />
     </div>
   );
 }
