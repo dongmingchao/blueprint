@@ -12,6 +12,7 @@ import css from './Node.module.styl';
 
 export interface Props extends ParentProps {
   ref?: Ref<HTMLDivElement>
+  style?: JSX.CSSProperties
 }
 
 function Node(props: Props) {
@@ -35,6 +36,7 @@ function Node(props: Props) {
   function style(): JSX.CSSProperties {
     const p = position();
     return {
+      ...props.style,
       left: p.left + 'px',
       top: p.top + 'px',
     };
