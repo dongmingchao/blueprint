@@ -3,7 +3,7 @@ import { Location2D } from '@/interfaces/node'
 import { caretPositionFromPoint } from '@/utils/caretPosition'
 import { JSX, batch, createEffect, createSignal } from 'solid-js'
 import css from './NodeRichText.module.styl'
-import { previousClone, nextClone, relativePath } from '@/utils/DOMtools'
+import { previousClone, nextClone, relativePath, createBoldMark, isEmptyNode } from '@/utils/DOMtools'
 
 const strong = /(?<MarkStart>\*\*)(?<text>.*)(?<MarkEnd>\*\*)/gs
 // const em = /(?<MarkStart>\*)(?<text>.*)(?<MarkEnd>\*)/gs
@@ -28,13 +28,20 @@ function NodeRichText() {
   }
 
   createEffect(() => {
+    /**
+     * 更新光标位置
+     */
     if (lastCaret === undefined) return
     const node = currentEditNode()
     if (node === null) return
     setTimeout(function () {
       buffer?.focus()
     }, 0);
-    node.parentElement?.insertBefore(lastCaret, node.nextElementSibling)
+    const parent = node.parentElement
+    if (parent === null) return
+    parent.insertBefore(lastCaret, node.nextElementSibling)
+    if (body === undefined) return
+    updateRelativeNodes(relativePath(body, parent))
   })
 
   function updateCaretRange() {
@@ -50,7 +57,6 @@ function NodeRichText() {
       }
     }
     const val = anchorOffset()
-    console.warn('set end', cen, val, caretRange)
     caretRange.setEnd(cen, val)
     caretRange.collapse()
     setCaretTransform(updateCaretTransform())
@@ -122,14 +128,8 @@ function NodeRichText() {
                   }
                   start = ret.index + ret[0].length
                 }
-                const markstart = document.createElement('label')
-                markstart.innerText = '**'
-                markstart.dataset.isMark = ''
-                const markend = document.createElement('label')
-                markend.innerText = '**'
-                markend.dataset.isMark = ''
                 const strong = document.createElement('strong')
-                strong.append(markstart, text, markend)
+                strong.append(createBoldMark(), text, createBoldMark())
                 generated.push(strong)
               }
             }
@@ -154,20 +154,22 @@ function NodeRichText() {
       case 'insertParagraph':
         if (node === null) return
         const rest = node.splitText(ano)
-        relatives.reduce<[Node, Node]>(([l, r], cv) => {
+        // let [newParagraph, currentEditing]: [Node, Node] = [node, rest]
+        let [newParagraph, currentEditing] = relatives.reduce<[Node, Node]>(
+          ([l, r], cv) => {
           if (cv instanceof HTMLElement) {
-            const left = previousClone(cv.tagName, l)
-            const right = nextClone(cv.tagName, r)
+            const left = isEmptyNode(l) ? l : previousClone(cv.tagName, l)
+            const right = isEmptyNode(r) ? r : nextClone(cv.tagName, r)
             cv.replaceWith(left, right)
             return [left, right]
           }
           return [l, r]
         }, [node, rest])
-        if (relatives.length === 0) {
-          const parent = node.parentNode
-          if (parent) {
-            const p = previousClone('p', node)
-            parent.insertBefore(p, rest)
+        const parent = newParagraph.parentNode
+        if (parent) {
+          if (newParagraph.nodeName !== 'P') {
+            newParagraph = previousClone('p', newParagraph)
+            parent.insertBefore(newParagraph, currentEditing)
           }
         }
         setCurrentEditNode(rest)
@@ -188,7 +190,6 @@ function NodeRichText() {
   }
 
   const placeCaret: JSX.EventHandler<HTMLElement, PointerEvent> = function (e) {
-    updateRelativeNodes(relativePath(e.currentTarget, e.target))
     if (buffer === undefined) return
     const caret = caretPositionFromPoint(e.clientX, e.clientY)
     if (caret === undefined) return;
