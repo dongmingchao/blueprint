@@ -1,12 +1,9 @@
 import Node from '@/components/Node/Node'
 import { Location2D } from '@/interfaces/node'
+import { isEmptyNode, markPairRestore, mergeText, nextClone, previousClone, processText, relativePath } from '@/utils/DOMtools'
 import { caretPositionFromPoint } from '@/utils/caretPosition'
 import { JSX, batch, createEffect, createSignal } from 'solid-js'
 import css from './NodeRichText.module.styl'
-import { previousClone, nextClone, relativePath, createBoldMark, isEmptyNode } from '@/utils/DOMtools'
-
-const strong = /(?<MarkStart>\*\*)(?<text>.*)(?<MarkEnd>\*\*)/gs
-// const em = /(?<MarkStart>\*)(?<text>.*)(?<MarkEnd>\*)/gs
 
 function NodeRichText() {
   let body: HTMLDivElement | undefined
@@ -34,9 +31,6 @@ function NodeRichText() {
     if (lastCaret === undefined) return
     const node = currentEditNode()
     if (node === null) return
-    setTimeout(function () {
-      buffer?.focus()
-    }, 0);
     const parent = node.parentElement
     if (parent === null) return
     parent.insertBefore(lastCaret, node.nextElementSibling)
@@ -62,33 +56,12 @@ function NodeRichText() {
     setCaretTransform(updateCaretTransform())
   }
 
-  function insertBeforeEditing(
-    node: () => Node[] | Node | undefined,
-    child: Node | null = null,
-    outer: HTMLElement | null = null,
-  ) {
-    if (child === null) {
-      child = currentEditNode()
-    }
-    if (child === null) return
-    if (outer === null) {
-      outer = child.parentElement
-    }
-    if (outer === null) return
-    const nd = node()
-    if (nd === undefined) return
-    const n = Array.isArray(nd) ? nd : [nd]
-    console.warn(outer, child)
-    for (const dom of n) {
-      outer.insertBefore(dom, child)
-    }
-  }
-
   function onInput(e: InputEvent) {
     e.preventDefault()
     const ano = anchorOffset()
     const node = currentEditNode()
     const relatives = relativeNodes()
+    markPairRestore(relatives)
     console.warn('input', e.inputType, e.data)
 
     switch (e.inputType) {
@@ -96,7 +69,8 @@ function NodeRichText() {
         if (ano > 0) {
           if (node instanceof Text) {
             node.deleteData(ano - 1, 1)
-            setAnchorOffset(a => a - 1)
+            const start = processText(node)
+            setAnchorOffset(a => a - 1 - start)
             updateCaretRange()
           }
         }
@@ -104,67 +78,36 @@ function NodeRichText() {
       case 'insertCompositionText':
         break
       case 'insertText':
-        if (e.data) {
-          const d = e.data
-          if (node === null) {
-            if (body) {
-              const n = document.createTextNode(d)
-              body.insertBefore(n, body.firstChild)
-              setCurrentEditNode(n)
-              setAnchorOffset(_ => d.length)
-            }
-          } else if (node instanceof Text) {
-            node.insertData(ano, d)
-            const generated: Node[] = []
-            let start = 0
-            for (const ret of node.data.matchAll(strong)) {
-              const { text } = ret?.groups ?? {}
-              if (text) {
-                if (ret.index !== undefined) {
-                  if (ret.index !== start) {
-                    generated.push(
-                      document.createTextNode(
-                        node.data.substring(start, ret.index)))
-                  }
-                  start = ret.index + ret[0].length
-                }
-                const strong = document.createElement('strong')
-                strong.append(createBoldMark(), text, createBoldMark())
-                generated.push(strong)
-              }
-            }
-            // if (start !== node.data.length) {
-            //   generated.push(
-            //     document.createTextNode(
-            //       node.data.substring(start, node.data.length)))
-            // }
-            if (generated.length === 0) {
-              setAnchorOffset(a => a + d.length)
-            } else {
-              insertBeforeEditing(() => {
-                node.deleteData(0, start)
-                setAnchorOffset(a => a + d.length - start)
-                return generated
-              })
-            }
+        if (e.data === null) break
+        const d = e.data
+        if (node === null) {
+          if (body) {
+            const n = document.createTextNode(d)
+            body.insertBefore(n, body.firstChild)
+            setCurrentEditNode(n)
+            setAnchorOffset(_ => d.length)
           }
+          updateCaretRange()
+        } else {
+          node.insertData(ano, d)
+          const start = processText(node)
+          setAnchorOffset(a => a + d.length - start)
           updateCaretRange()
         }
         break
       case 'insertParagraph':
         if (node === null) return
         const rest = node.splitText(ano)
-        // let [newParagraph, currentEditing]: [Node, Node] = [node, rest]
         let [newParagraph, currentEditing] = relatives.reduce<[Node, Node]>(
           ([l, r], cv) => {
-          if (cv instanceof HTMLElement) {
-            const left = isEmptyNode(l) ? l : previousClone(cv.tagName, l)
-            const right = isEmptyNode(r) ? r : nextClone(cv.tagName, r)
-            cv.replaceWith(left, right)
-            return [left, right]
-          }
-          return [l, r]
-        }, [node, rest])
+            if (cv instanceof HTMLElement) {
+              const left = isEmptyNode(l) ? l : previousClone(cv.tagName, l)
+              const right = isEmptyNode(r) ? r : nextClone(cv.tagName, r)
+              cv.replaceWith(left, right)
+              return [left, right]
+            }
+            return [l, r]
+          }, [node, rest])
         const parent = newParagraph.parentNode
         if (parent) {
           if (newParagraph.nodeName !== 'P') {
@@ -172,6 +115,7 @@ function NodeRichText() {
             parent.insertBefore(newParagraph, currentEditing)
           }
         }
+        mergeText(newParagraph)
         setCurrentEditNode(rest)
         setAnchorOffset(0)
         updateCaretRange()
@@ -239,14 +183,13 @@ function NodeRichText() {
       class={css.board}
       onPointerDown={onBodyFocus}>
 
-      <span ref={lastCaret} data-caret>
-        <span
-          style={style()}
-          class={css.caret}
-          ref={buffer}
-          onCompositionEnd={onComposition}
-          onBeforeInput={onInput} contentEditable></span>
-      </span>
+      <span ref={lastCaret} data-caret-origin></span>
+      <span
+        style={style()}
+        class={css.caret}
+        ref={buffer}
+        onCompositionEnd={onComposition}
+        onBeforeInput={onInput} contentEditable></span>
     </div>
   </Node>
 }

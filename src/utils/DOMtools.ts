@@ -1,3 +1,5 @@
+import { strong } from './RichText/regexs';
+
 export function relativePath(context: Element, target: Element) {
   let current: Element | null = target;
   const ret: Element[] = [];
@@ -61,9 +63,72 @@ export function createBoldMark() {
   return markend;
 }
 
+export function mergeText(parent: Node) {
+  let last: Node | undefined
+  let node = parent.firstChild
+  while(node) {
+    const next = node.nextSibling
+    if (node instanceof Text && last instanceof Text) {
+      last.appendData(node.data);
+      node.remove()
+    } else {
+      last = node
+    }
+    node = next
+  }
+}
+
+export function markPairRestore(relatives: Element[]) {
+  const parent = relatives[0];
+  if (parent && isPairMark(parent)) {
+    relatives.shift();
+    const block = relatives.shift();
+    if (block && block.childNodes.length > 2) {
+      const start = block.childNodes.item(0) as HTMLLabelElement;
+      const text = block.childNodes.item(1) as Text;
+      const end = block.childNodes.item(2) as HTMLLabelElement;
+      if (start.firstChild && end.firstChild) {
+        block.replaceWith(
+          ...start.childNodes,
+          text,
+          ...end.childNodes,
+        );
+      }
+    }
+  }
+}
+
 export function isEmptyNode(node: Node | null): boolean {
-  if (node === null) return true
-  if (node.firstChild) return false
-  if (node instanceof Text) return node.length === 0
-  return false
+  if (node === null) return true;
+  if (node.firstChild) return false;
+  if (node instanceof Text) return node.length === 0;
+  return false;
+}
+
+export function processText(node: Text) {
+  const generated: Node[] = []
+  let start = 0
+  for (const ret of node.data.matchAll(strong)) {
+    const { text } = ret?.groups ?? {}
+    if (text) {
+      if (ret.index !== undefined) {
+        if (ret.index !== start) {
+          generated.push(
+            document.createTextNode(
+              node.data.substring(start, ret.index)))
+        }
+        start = ret.index + ret[0].length
+      }
+      const strong = document.createElement('strong')
+      strong.append(createBoldMark(), text, createBoldMark())
+      generated.push(strong)
+    }
+  }
+  if (start) {
+    node.deleteData(0, start)
+    node.replaceWith(...generated, node)
+    // const parent = node.parentNode
+    // if (parent) mergeText(parent, node)
+  }
+  return start
 }
